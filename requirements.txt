@@ -1,0 +1,8 @@
+pandas
+GitPython
+tqdm
+PyPDF2
+numpy
+python-dotenv
+requests
+sentence-transformers

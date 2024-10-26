@@ -1,0 +1,19 @@
+# Python virtual environment
+aleoai-env/
+
+# Logs
+logs/
+
+# Data files
+data/
+pdfs/
+
+# Environment variables
+.env
+
+# PyCache files
+__pycache__/
+*.pyc
+
+# MacOS specific files
+.DS_Store
