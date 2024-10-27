@@ -6,3 +6,7 @@ numpy
 python-dotenv
 requests
 sentence-transformers
+transformers
+datasets
+accelerate
+bitsandbytes
