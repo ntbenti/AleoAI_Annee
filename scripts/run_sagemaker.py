@@ -32,11 +32,10 @@ def main():
     huggingface_estimator = HuggingFace(
         entry_point='train_codellama.py',
         source_dir='scripts',
-        instance_type='ml.g5.xlarge',  # Updated instance type
-        instance_count=1,
         role=role,
-        transformers_version='4.31',
-        pytorch_version='2.0.0',
+        instance_count=1,
+        instance_type='ml.g5.xlarge',  # Updated instance type
+        framework_version='1.31.1',
         py_version='py39',
         hyperparameters=hyperparameters,
         use_spot_instances=True,  # Enable spot instances

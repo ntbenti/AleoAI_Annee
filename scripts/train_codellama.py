@@ -10,11 +10,7 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-install("transformers==4.31.0")
-install("datasets==2.13.0")
-install("accelerate==0.21.0")
-install("bitsandbytes==0.42.0")
-install("peft==0.5.0")
+install("transformers==4.33.0")
 
 def main():
     # Check if GPU is available
