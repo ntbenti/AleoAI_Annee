@@ -1,33 +1,24 @@
 import os
 import torch
-import subprocess
-import sys
 from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingArguments, DataCollatorForLanguageModeling
 from datasets import load_dataset
-from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
-
-# Install required packages
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-install("transformers==4.33.0")
 
 def main():
-    # Check if GPU is available
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f'Using device: {device}')
+    # Get Hugging Face token from environment variable
+    hf_token = os.environ.get('HUGGING_FACE_HUB_TOKEN')
 
-    # Load the tokenizer and model
     model_name = "codellama/CodeLlama-7b-hf"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=hf_token)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        load_in_8bit=True,  # Use 8-bit precision
-        device_map='auto'   # Automatically map layers to devices
+        use_auth_token=hf_token,
+        load_in_8bit=True,
+        device_map='auto'
     )
 
     # Load your dataset
-    data_files = {'train': 'data/processed/training_data.txt'}
+    data_files = {'train': '/opt/ml/input/data/train/training_data.txt'}
     dataset = load_dataset('text', data_files=data_files)
 
     # Tokenize the dataset
@@ -48,12 +39,12 @@ def main():
 
     # Training arguments
     training_args = TrainingArguments(
-        output_dir='/opt/ml/checkpoints',  # Changed output directory for checkpointing
+        output_dir='/opt/ml/model',
         overwrite_output_dir=True,
         num_train_epochs=3,
         per_device_train_batch_size=1,
         gradient_accumulation_steps=8,
-        save_steps=500,                # Save checkpoint every 500 steps
+        save_steps=500,
         save_total_limit=2,
         logging_steps=100,
         learning_rate=5e-5,
@@ -72,10 +63,10 @@ def main():
     )
 
     # Start training
-    trainer.train(resume_from_checkpoint=True)  # Enable resuming from checkpoint
+    trainer.train()
 
     # Save the fine-tuned model
-    trainer.save_model('/opt/ml/model')  # Save the model to the designated Sagemaker model directory
+    trainer.save_model('/opt/ml/model')
 
 if __name__ == "__main__":
     main()

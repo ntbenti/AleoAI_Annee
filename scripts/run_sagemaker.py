@@ -1,5 +1,6 @@
 import sagemaker
 from sagemaker.huggingface import HuggingFace
+from sagemaker import image_uris
 import os
 
 def main():
@@ -28,21 +29,34 @@ def main():
         key_prefix='codellama-training/data'
     )
 
+    # Retrieve the image URI
+    image_uri = image_uris.retrieve(
+        framework='huggingface',
+        region='eu-central-1',
+        version='4.33.0',  # Transformers version
+        base_framework_version='2.0.1',  # PyTorch version
+        py_version='py39',
+        instance_type='ml.g5.xlarge',
+        image_scope='training',
+    )
+
     # Define the Hugging Face estimator
     huggingface_estimator = HuggingFace(
         entry_point='train_codellama.py',
         source_dir='scripts',
         role=role,
+        image_uri=image_uri,
         instance_count=1,
-        instance_type='ml.g5.xlarge',  # Updated instance type
-        framework_version='1.31.1',
-        py_version='py39',
+        instance_type='ml.g5.xlarge',
         hyperparameters=hyperparameters,
-        use_spot_instances=True,  # Enable spot instances
-        max_wait=7200,            # Maximum wait time in seconds (adjust as needed)
-        max_run=7200,             # Maximum run time in seconds (adjust as needed)
-        checkpoint_s3_uri='s3://aleoai-training-bucket/checkpoints/',  # Replace with your S3 bucket
-        checkpoint_local_path='/opt/ml/checkpoints',             # Local path for checkpoints
+        use_spot_instances=True,
+        max_wait=7200,
+        max_run=7200,
+        checkpoint_s3_uri='s3://aleoai-training-bucket/checkpoints/',
+        checkpoint_local_path='/opt/ml/checkpoints',
+        environment={
+            'HUGGING_FACE_HUB_TOKEN': 'your_hf_token_here'  # Replace with your actual token
+        },
     )
 
     # Start the training job
