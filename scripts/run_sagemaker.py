@@ -1,6 +1,5 @@
 import sagemaker
 from sagemaker.huggingface import HuggingFace
-from sagemaker import image_uris
 import os
 
 def main():
@@ -29,23 +28,14 @@ def main():
         key_prefix='codellama-training/data'
     )
 
-    # Retrieve the image URI
-    image_uri = image_uris.retrieve(
-        framework='huggingface',
-        region='eu-central-1',
-        version='4.33.0',  # Transformers version
-        base_framework_version='2.0.1',  # PyTorch version
-        py_version='py39',
-        instance_type='ml.g5.xlarge',
-        image_scope='training',
-    )
-
-    # Define the Hugging Face estimator
+    # Define the Hugging Face estimator with supported versions
     huggingface_estimator = HuggingFace(
         entry_point='train_codellama.py',
         source_dir='scripts',
         role=role,
-        image_uri=image_uri,
+        transformers_version='4.36.0',  # Updated to a supported version
+        pytorch_version='2.1.0',        # Updated to a supported version
+        py_version='py310',
         instance_count=1,
         instance_type='ml.g5.xlarge',
         hyperparameters=hyperparameters,
@@ -55,7 +45,7 @@ def main():
         checkpoint_s3_uri='s3://aleoai-training-bucket/checkpoints/',
         checkpoint_local_path='/opt/ml/checkpoints',
         environment={
-            'HUGGING_FACE_HUB_TOKEN': 'your_hf_token_here'  # Replace with your actual token
+            'HUGGING_FACE_HUB_TOKEN': 'your_actual_hf_token'  # Replace with your actual token
         },
     )
 

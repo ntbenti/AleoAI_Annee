@@ -9,13 +9,20 @@ def main():
 
     model_name = "codellama/CodeLlama-7b-hf"
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=hf_token)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        use_auth_token=hf_token,
+        trust_remote_code=True  # Added this line
+    )
+
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         use_auth_token=hf_token,
         load_in_8bit=True,
-        device_map='auto'
+        device_map='auto',
+        trust_remote_code=True  # Added this line
     )
+
 
     # Load your dataset
     data_files = {'train': '/opt/ml/input/data/train/training_data.txt'}
@@ -28,7 +35,7 @@ def main():
     tokenized_dataset = dataset.map(
         tokenize_function,
         batched=True,
-        num_proc=4,  # Number of CPU cores
+        num_proc=4,
         remove_columns=['text']
     )
 
@@ -37,18 +44,25 @@ def main():
         tokenizer=tokenizer, mlm=False
     )
 
+    # Retrieve hyperparameters from environment variables
+    num_train_epochs = int(os.environ.get('SM_HP_NUM_TRAIN_EPOCHS', '3'))
+    per_device_train_batch_size = int(os.environ.get('SM_HP_PER_DEVICE_TRAIN_BATCH_SIZE', '1'))
+    gradient_accumulation_steps = int(os.environ.get('SM_HP_GRADIENT_ACCUMULATION_STEPS', '8'))
+    learning_rate = float(os.environ.get('SM_HP_LEARNING_RATE', '5e-5'))
+    fp16 = os.environ.get('SM_HP_FP16', 'True') == 'True'
+
     # Training arguments
     training_args = TrainingArguments(
         output_dir='/opt/ml/model',
         overwrite_output_dir=True,
-        num_train_epochs=3,
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=8,
+        num_train_epochs=num_train_epochs,
+        per_device_train_batch_size=per_device_train_batch_size,
+        gradient_accumulation_steps=gradient_accumulation_steps,
+        learning_rate=learning_rate,
+        fp16=fp16,
         save_steps=500,
         save_total_limit=2,
         logging_steps=100,
-        learning_rate=5e-5,
-        fp16=True,
         report_to='none',
         save_strategy='steps',
         push_to_hub=False,
