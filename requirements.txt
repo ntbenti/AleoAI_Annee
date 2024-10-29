@@ -1,3 +1,4 @@
+# Core packages
 pandas
 GitPython
 tqdm
@@ -5,8 +6,17 @@ PyPDF2
 numpy
 python-dotenv
 requests
-sentence-transformers
-transformers
-datasets==3.0.2
-accelerate
-bitsandbytes
+
+# Embedding generation
+sentence-transformers==2.2.2
+
+# Training dependencies
+transformers==4.36.0
+datasets==2.13.0
+accelerate==0.21.0
+bitsandbytes==0.42.0
+peft==0.5.0
+
+# Dependency management
+dill==0.3.6
+multiprocess==0.70.14
