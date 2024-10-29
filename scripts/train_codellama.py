@@ -2,6 +2,7 @@ import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingArguments, DataCollatorForLanguageModeling
 from datasets import load_dataset
+from peft import LoraConfig, get_peft_model
 
 def main():
     # Get Hugging Face token from environment variable
@@ -11,18 +12,37 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
-        use_auth_token=hf_token,
-        trust_remote_code=True  # Added this line
+        token=hf_token,
+        trust_remote_code=True
     )
+
+    # **Set the pad_token as the eos_token**
+    tokenizer.pad_token = tokenizer.eos_token
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        use_auth_token=hf_token,
+        token=hf_token,
         load_in_8bit=True,
         device_map='auto',
-        trust_remote_code=True  # Added this line
+        trust_remote_code=True
     )
 
+    # Enable gradient checkpointing
+    model.gradient_checkpointing_enable()
+
+    # Prepare LoRA configuration
+    lora_config = LoraConfig(
+        r=8,  # Rank of the LoRA matrices
+        lora_alpha=32,
+        target_modules=["q_proj", "v_proj"],  # Target attention modules
+        lora_dropout=0.1,
+        bias="none",
+        task_type="CAUSAL_LM"
+    )
+
+    # Apply LoRA to the model
+    model = get_peft_model(model, lora_config)
+    model.print_trainable_parameters()
 
     # Load your dataset
     data_files = {'train': '/opt/ml/input/data/train/training_data.txt'}
@@ -50,6 +70,7 @@ def main():
     gradient_accumulation_steps = int(os.environ.get('SM_HP_GRADIENT_ACCUMULATION_STEPS', '8'))
     learning_rate = float(os.environ.get('SM_HP_LEARNING_RATE', '5e-5'))
     fp16 = os.environ.get('SM_HP_FP16', 'True') == 'True'
+    gradient_checkpointing = os.environ.get('SM_HP_GRADIENT_CHECKPOINTING', 'True') == 'True'
 
     # Training arguments
     training_args = TrainingArguments(
@@ -66,6 +87,8 @@ def main():
         report_to='none',
         save_strategy='steps',
         push_to_hub=False,
+        gradient_checkpointing=gradient_checkpointing,
+        optim="paged_adamw_8bit",
     )
 
     # Initialize the Trainer
@@ -79,7 +102,7 @@ def main():
     # Start training
     trainer.train()
 
-    # Save the fine-tuned model
+    # Save the fine-tuned model (including LoRA adapters)
     trainer.save_model('/opt/ml/model')
 
 if __name__ == "__main__":

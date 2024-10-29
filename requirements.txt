@@ -15,8 +15,11 @@ transformers==4.36.0
 datasets==2.13.0
 accelerate==0.21.0
 bitsandbytes==0.42.0
-peft==0.5.0
+peft==0.5.0  # Ensure PEFT is installed
 
 # Dependency management
 dill==0.3.6
 multiprocess==0.70.14
+
+# AWS SageMaker SDK
+sagemaker>=2.232.2
